@@ -1,0 +1,30 @@
+I have four different versions of each question:
+
+1) the raw question in its original form
+2) "quick text processing" version which has no stop words, no numbers, no punctuation, words are all lower case and stemmed
+3) apply the "quick text processing" steps AND reorder the tokens so that they are in alphabetical order (idea is to get better string distance results for word matching)
+4) same as step 3 except I'm limiting it to unique tokens so that no token can appear more than once in the string
+
+
+(Page 19 of this document explains these string distance methods I'm planning on using: https://cran.r-project.org/web/packages/stringdist/stringdist.pdf)
+From there, I am running these string distance methods:
+1) "osa" 
+2) "lv"
+3) "dl"
+4) "lcs"
+5) "cosine"
+6) "jaccard"
+7) "jw"
+
+
+That will provide us with 24 various string distance features to get a feel for the LB.
+
+I'm thinking I'll run a xgboost model with a fairly high nrounds parameter with these.
+
+
+
+Next step ideas after this:
+1) maybe tf-idf? not sure if there are enough tokens per question for this
+2) maybe Part-of-speech tagging? it might be beneficial to tag tokens as verbs, nouns, etc.
+3) maybe entitiy recognition? should probably give a boost of a score to any pair of questions that refer to the same entity or same list of entities
+4) word embeddings / vectors (word2vec, glove, etc.) -- I'd like to explore these when they are trained on wikipedia dumps as well as the corpuses of questions (https://www.kaggle.com/c/quora-question-pairs/discussion/30286)

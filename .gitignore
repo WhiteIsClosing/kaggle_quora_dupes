@@ -5,6 +5,14 @@
 # Session Data files
 .RData
 
+# csv files from input or processed data
+input/*.csv
+processed_data/*.csv
+
+# rds files from input or processed data
+input/*.rds
+processed_data/*.rds
+
 # Example code in package build process
 *-Ex.R
 
