@@ -11,6 +11,7 @@ library(stringdist)
 #library(parallel)
 #library(foreach)
 library(caret)
+library(xgboost)
 
 
 
