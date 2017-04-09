@@ -8,12 +8,12 @@ library(rstudioapi)
 setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)))
 source("r_scripts/r_script_config.R")
 
-# vignette("xgboost")  # opens local file
+    # vignette("xgboost")  # opens local file
 
-?vignette
-vignette()
-demo()
-demo("cross_validation")
+    # ?vignette
+    # vignette()
+    # demo()
+    # demo("cross_validation")
 
 
 # starting point

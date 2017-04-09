@@ -44,7 +44,7 @@ sampsub <- read.csv(file = 'input/sample_submission.csv', stringsAsFactors = F)
     test$q1_qtp_reo_unq <- sapply(test$q1_qtp_reo, unique_tokens)
     test$q2_qtp_reo_unq <- sapply(test$q2_qtp_reo, unique_tokens)
     
-    elapsed_preproc <- Sys.time() - t_preproc  # 5.56 hours (i think i made a mistake on timing this one)
+    t_elapsed_preproc <- Sys.time() - t_preproc  # 5.56 hours (i think i made a mistake on timing this one)
     
     saveRDS(train, file = 'processed_data/train_01.rds')
     saveRDS(test, file = 'processed_data/test_01.rds')

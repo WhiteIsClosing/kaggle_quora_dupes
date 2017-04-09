@@ -11,7 +11,7 @@ source('r_scripts/r_script_config.R')
 
 train <- readr::read_csv(file = 'input/train.csv')
 test <- readr::read_csv(file = 'input/test.csv')
-sampsub <- read.csv(file = 'input/sample_submission.csv', stringsAsFactors = F)
+sampsub <- readr::read_csv(file = 'input/sample_submission.csv')
 
 
 
