@@ -26,6 +26,8 @@ x1; x2
 #' Then count how many of the unique non-stop words can be found in BOTH
 #' divided by the total number of unique stop words
 
+
+# this needs to be the inner function that is called twice
 x1 <- tm::removeNumbers(x1)
 x1 <- tm::removePunctuation(x1)
 x1 <- tm::removeWords(x1, stopwords(kind = 'en'))
@@ -43,6 +45,8 @@ x2 <-  gsub("\\s+", " ", x2)
 x2 <- unlist(strsplit(x2, ' '))
 x2
 
+
+# this needs to be the outter function
 un <- dplyr::union(x1, x2)
 inter <- dplyr::intersect(x1, x2)
 
