@@ -18,8 +18,11 @@
     test <- readRDS('processed_data/test_02.rds')
     test$is_duplicate <- NA
     
+    test_id <- test$test_id
+    train_qid1 <- train$qid1    
+    train_qid2 <- train$qid2
     
-    
+            
 # remove cols that aren't common
     not_in_test <- names(train)[!names(train) %in% names(test)]
     not_in_train <- names(test)[!names(test) %in% names(train)]
@@ -77,7 +80,7 @@
     
     
     saveRDS(all2, file = 'processed_data/all2_numeric_feature_matrix_001.rds')
-    
+    write.csv(all2, file = 'processed_data/all2_numeric_feature_matrix_001.csv', row.names = F)
     
 # split back into train and test:
     
@@ -91,6 +94,8 @@
     
     
 # convert target to factor and change levels to variable-friendly values (this is for randomForest)
+    train2_no_factor <- train2
+    
     train2$is_duplicate <- as.factor(train2$is_duplicate)
     levels(train2$is_duplicate)[levels(train2$is_duplicate) == 0] <- 'zero'
     levels(train2$is_duplicate)[levels(train2$is_duplicate) == 1] <- 'one'
@@ -100,16 +105,25 @@
     holdout <- train2[ holdout_index, ]    
     train3 <- train2[ -holdout_index, ]
     
+    train3_no_factor <- train2_no_factor[ -holdout_index, ]
+    
     nrow(train3) / nrow(train2)  # should be 0.7
     
     
 # now build cross ref model using train3, test against holdout, then check LB with test2
     
-    
+    # Save RDS
     saveRDS(train3, file = 'processed_data/modeling_rf_001_train3.rds')
     saveRDS(test2, file = 'processed_data/modeling_rf_001_test2.rds')
     saveRDS(holdout, file = 'processed_data/modeling_rf_001_holdout.rds')
     
+    # Also save as CSV
+    write.csv(train3, file = 'processed_data/modeling_rf_001_train3.csv')
+    write.csv(train3_no_factor, file = 'processed_data/modeling_rf_001_train3_no_factor.csv')
+    write.csv(test2, file = 'processed_data/modeling_rf_001_test2.csv')
+    write.csv(holdout, file = 'processed_data/modeling_rf_001_holdout.csv')
+    
+    # Read in RDS (can start here if we've already run script before)
     train3 <- readRDS(file = 'processed_data/modeling_rf_001_train3.rds')
     test2 <- readRDS(file = 'processed_data/modeling_rf_001_test2.rds')
     holdout <- readRDS(file = 'processed_data/modeling_rf_001_holdout.rds')

@@ -21,6 +21,9 @@ train3 <- readRDS(file = 'processed_data/modeling_rf_001_train3.rds')
 test2 <- readRDS(file = 'processed_data/modeling_rf_001_test2.rds')
 holdout <- readRDS(file = 'processed_data/modeling_rf_001_holdout.rds')
 
+train3_no_factor <- read.csv(file = 'processed_data/modeling_rf_001_train3_no_factor.csv', stringsAsFactors = F)
+test = read.csv('processed_data/modeling_rf_001_test2.csv', stringsAsFactors = F)
+
 
 # model specific stuff
     train3_y <- train3$is_duplicate

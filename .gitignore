@@ -39,3 +39,12 @@ vignettes/*.pdf
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+# ignore all pycharm stuff (I think this is pycharm)
+.idea*
+
+# I also don't want ipynb checkpoints, just the notebooks themselves
+*.ipynb_checkpoints*
+
+# lets ignore ALL csv for now until there is a better strategy for this
+*.csv
