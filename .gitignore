@@ -48,3 +48,7 @@ vignettes/*.pdf
 
 # lets ignore ALL csv for now until there is a better strategy for this
 *.csv
+
+
+# ignore any dir with this string in it
+*LARGE_FILES*

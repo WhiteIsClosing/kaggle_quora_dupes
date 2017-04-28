@@ -5,6 +5,7 @@
 # I'm seeing some potentially huge encoding issues here
 
 
+
 # setup:
     library(rstudioapi)
     setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)))
@@ -85,48 +86,51 @@
     # now we'll have many different word vectors, so this will be highly iterative
     
     # write it out now
-    
+    saveRDS(train_tf_idf, file='processed_data/tf_idf_train_01.rds')
             
     
-# example of tf-idf ------------------------------------------ 
-    # http://juliasilge.com/blog/Term-Frequency-tf-idf/
-
-    library(dplyr)
-    library(janeaustenr)
-    library(tidytext)
-    abooks <- austen_books()
     
-    # this is organized by sentence / book (in different columns)
-    head(abooks[30:60,], 30)
-    
-    
-    # going to break this out into it's multiple steps to see what its doing
-    # book_words <- abooks %>%
-    #     tidytext::unnest_tokens(word, text) %>%
-    #     dplyr::count(book, word, sort=T) %>%
-    #     ungroup()
-    
-    
-    # ok so this splits each and every word out according to book/category
-    book_words1 <- abooks %>%
-        # "text" are sentences and "book" is the category or document name
-        tidytext::unnest_tokens(word, text)  
-    
-    
-    book_words2 <- book_words1 %>%
-        # count of each word in each doc (I believe this is the "tf" in "tf-idf")
-        dplyr::count(book, word, sort=T)
-    
-    book_words3 <- book_words2 %>%
-        # Not sure how necessary this is, but I'm cool with it
-        ungroup()
 
     
-    # now find total words within each book
-    total_words <- book_words3 %>% 
-        group_by(book) %>% 
-        summarize(total = sum(n))
-    
+# # example of tf-idf ------------------------------------------ 
+#     # http://juliasilge.com/blog/Term-Frequency-tf-idf/
+# 
+#     library(dplyr)
+#     library(janeaustenr)
+#     library(tidytext)
+#     abooks <- austen_books()
+#     
+#     # this is organized by sentence / book (in different columns)
+#     head(abooks[30:60,], 30)
+#     
+#     
+#     # going to break this out into it's multiple steps to see what its doing
+#     # book_words <- abooks %>%
+#     #     tidytext::unnest_tokens(word, text) %>%
+#     #     dplyr::count(book, word, sort=T) %>%
+#     #     ungroup()
+#     
+#     
+#     # ok so this splits each and every word out according to book/category
+#     book_words1 <- abooks %>%
+#         # "text" are sentences and "book" is the category or document name
+#         tidytext::unnest_tokens(word, text)  
+#     
+#     
+#     book_words2 <- book_words1 %>%
+#         # count of each word in each doc (I believe this is the "tf" in "tf-idf")
+#         dplyr::count(book, word, sort=T)
+#     
+#     book_words3 <- book_words2 %>%
+#         # Not sure how necessary this is, but I'm cool with it
+#         ungroup()
+# 
+#     
+#     # now find total words within each book
+#     total_words <- book_words3 %>% 
+#         group_by(book) %>% 
+#         summarize(total = sum(n))
+#     
         
         
     
