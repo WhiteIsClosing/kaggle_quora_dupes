@@ -66,9 +66,10 @@
     names(qid2_docvecs)
     train3 <- merge(x=train2, y=qid2_docvecs, by='qid2', all.x=T, all.y=F)    
     
+    rm(qid1_docvecs, qid2_docvecs, train_docvec, train2)
+    gc()
     
-    
-    
+    head(train3)
     
     
 # define a function to be used for mapping in the scores
@@ -103,15 +104,25 @@
     # exp1.5s <- purrr::map2(train3$qid1_doc_vec_exp1.5, train3$qid2_doc_vec_exp1.5, safely(score_docvec_pair))
     # exp2s <- purrr::map2(train3$qid1_doc_vec_exp2, train3$qid2_doc_vec_exp2, safely(score_docvec_pair))
     
+    setDT(train3)
+    
+    train3_small <- train3[1:1000,]
     
     # bingo.. this is what we needed to do all along -- this also takes ~ 1.5 min per each map2
     t_testing <- Sys.time()
+    
     train4 <- train3 %>%
+    # train4 <- train3_small %>%    # if I want to test on a smaller data.table
         
         # instead of "safely(score_docvec_pair)" lets try "possibly(score_docvec_pair, NA_real_)"
         mutate(tfidf1_dv_sim = map2(qid1_doc_vec_exp1, qid2_doc_vec_exp1, possibly(score_docvec_pair, NA_real_)),
                tfidf1.5_dv_sim = map2(qid1_doc_vec_exp1.5, qid2_doc_vec_exp1.5, possibly(score_docvec_pair, NA_real_)),
-               tfidf2_dv_sim = map2(qid1_doc_vec_exp2, qid2_doc_vec_exp2, possibly(score_docvec_pair, NA_real_)))
+               tfidf2_dv_sim = map2(qid1_doc_vec_exp2, qid2_doc_vec_exp2, possibly(score_docvec_pair, NA_real_)),
+               tfidf3_dv_sim = map2(qid1_doc_vec_exp3, qid2_doc_vec_exp3, possibly(score_docvec_pair, NA_real_)),
+               tfidf4_dv_sim = map2(qid1_doc_vec_exp4, qid2_doc_vec_exp4, possibly(score_docvec_pair, NA_real_)),
+               tfidf5_dv_sim = map2(qid1_doc_vec_exp5, qid2_doc_vec_exp5, possibly(score_docvec_pair, NA_real_)),
+               tfidf9_dv_sim = map2(qid1_doc_vec_exp9, qid2_doc_vec_exp9, possibly(score_docvec_pair, NA_real_))
+        )
     (t_elap_testing <- Sys.time() - t_testing)
     
     
@@ -122,9 +133,14 @@
     #            tfidf2_dv_sim = map2(qid1_doc_vec_exp2, qid2_doc_vec_exp2, safely(score_docvec_pair)))
     
     train4 <- train4 %>%
-        mutate(tdvs_1 = tfidf1_dv_sim %>% flatten_dbl,
-               tdvs_1.5 = tfidf1.5_dv_sim %>% flatten_dbl,
-               tdvs_2 = tfidf2_dv_sim %>% flatten_dbl)
+        mutate(tfidf1_dv_sim = tfidf1_dv_sim %>% flatten_dbl,
+               tfidf1.5_dv_sim = tfidf1.5_dv_sim %>% flatten_dbl,
+               tfidf2_dv_sim = tfidf2_dv_sim %>% flatten_dbl,
+               tfidf3_dv_sim = tfidf3_dv_sim %>% flatten_dbl,
+               tfidf4_dv_sim = tfidf4_dv_sim %>% flatten_dbl,
+               tfidf5_dv_sim = tfidf5_dv_sim %>% flatten_dbl,
+               tfidf9_dv_sim = tfidf9_dv_sim %>% flatten_dbl)
+    
     
     
     train4$tfidf1_dv_sim %>% head()
@@ -136,13 +152,20 @@
     library(ggplot2)
     
     train4$is_dup_fac <- as.factor(train4$is_duplicate)
-    g1 <- ggplot(data=train4, aes(x=tdvs_2, fill=is_dup_fac)) +
+    g1 <- ggplot(data=train4, aes(x=tfidf5_dv_sim, fill=is_dup_fac)) +
         geom_histogram(alpha=0.4, position='identity')
     plot(g1)
     
     train4$tfidf1_dv_sim %>% unlist(recursive=T) %>% head() 
     
-    saveRDS(train4, file='processed_data/train_docvector_sim_01.rds')
+    train4_sub <- train4[, !grepl("^qid", names(train4))] %>% head()
     
+    saveRDS(train4, file='processed_data/train_docvector_sim_01.rds')
+    saveRDS(train4, file='processed_data/train_docvector_sim_01_sub.rds')
+    
+    names(train4)
+    sapply(train4, class)
+    
+    head(train4)
     
     

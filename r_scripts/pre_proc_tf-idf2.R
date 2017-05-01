@@ -34,52 +34,53 @@ library(purrr)
 
 
 # read in raw data, word vector, tf-idf scores
-train <- read.csv(file="input/train.csv", stringsAsFactors = F)
-glove <- readRDS("LARGE_FILES_word_vectors/glove_6B_50D_processed.rds")
-train_tfidf <- readRDS("processed_data/tf_idf_train_01.rds")
+    train <- read.csv(file="input/train.csv", stringsAsFactors = F)
+    glove <- readRDS("LARGE_FILES_word_vectors/glove_6B_50D_processed.rds")
+    train_tfidf <- readRDS("processed_data/tf_idf_train_01.rds")
 
-
+    head(train_tfidf)
 
 
 # limit train_tfidf to only what is found in glove and vice versa?
-train_tfidf2 <- train_tfidf[train_tfidf$word %in% names(glove),]
-glove_words_to_keep <- names(glove)[names(glove) %in% train_tfidf2$word]
-glove2 <- glove[ ,  glove_words_to_keep]
+    train_tfidf2 <- train_tfidf[train_tfidf$word %in% names(glove),]
+    glove_words_to_keep <- names(glove)[names(glove) %in% train_tfidf2$word]
+    glove2 <- glove[ ,  glove_words_to_keep]
 
 
 # put glove in a format that is easier to work with (vector can be nested with tidyr)
-glove3 <- data.frame(t(glove2))
-glove3$word <- glove_words_to_keep
+    glove3 <- data.frame(t(glove2))
+    glove3$word <- glove_words_to_keep
 
-# There is no reason to nest this yet... it doesn't even collapse any observations, only fields...
-# glove4 <- glove3 %>%
-#     nest(-word)
+    
+    
+        #There is no reason to nest this yet... it doesn't even collapse any observations, only fields...
+        glove4 <- glove3 %>%
+            nest(-word)
+        # this no longer makes sense (see previous comment amove)
+        # I can do mathematical operations on these vectors like so:
+        unlist(glove4$data[[1]]) + 100
+        glove4$data[[1]] + 100
+        glove4[['data']][[1]] + 200
 
-        # # this no longer makes sense (see previous comment amove)
-        # # I can do mathematical operations on these vectors like so:
-        # unlist(glove4$data[[1]]) + 100
-        # glove4$data[[1]] + 100
-        # glove4[['data']][[1]] + 200
-        # 
-        # # temp, I don't think we need these, but I might change my mind later:
-        # rm(glove, train_tfidf)
+        # temp, I don't think we need these, but I might change my mind later:
+        rm(glove, train_tfidf)
 
 
 
 # might need to also re-do those ranks now?
-train_tfidf2$tf_idf_rank_within_qid %>% head()
-train_tfidf2 <- train_tfidf2 %>% 
-    dplyr::group_by(qid) %>%
-    mutate(tf_idf_rank_within_qid2=row_number())
+    train_tfidf2$tf_idf_rank_within_qid %>% head()
+    train_tfidf2 <- train_tfidf2 %>% 
+        dplyr::group_by(qid) %>%
+        mutate(tf_idf_rank_within_qid2=row_number())
 
 
 
 # join our nested glove vectors to our original data
-setDT(train_tfidf2)
-setDT(glove3) #setDT(glove4)
-#tfidf_vector <- merge(x=train_tfidf2, y=glove4, by="word", all.x=T, all.y=F)
-tfidf_vector <- merge(x=train_tfidf2, y=glove3, by="word", all.x=T, all.y=F)
-setDF(tfidf_vector); setDF(glove3); setDF(train_tfidf2)
+    setDT(train_tfidf2)
+    setDT(glove3) #setDT(glove4)
+    #tfidf_vector <- merge(x=train_tfidf2, y=glove4, by="word", all.x=T, all.y=F)
+    tfidf_vector <- merge(x=train_tfidf2, y=glove3, by="word", all.x=T, all.y=F)
+    setDF(tfidf_vector); setDF(glove3); setDF(train_tfidf2)
 
 
 
@@ -111,19 +112,19 @@ setDF(tfidf_vector); setDF(glove3); setDF(train_tfidf2)
 
 
 # ok, now we're ready for some feature creation using our vectors
-tfidf_vector <- arrange(tfidf_vector, qid, tf_idf_rank_within_qid2)
+    tfidf_vector <- arrange(tfidf_vector, qid, tf_idf_rank_within_qid2)
 
 
 
 # so now everything will be stored in "data" -- tfidf, word vector dimensions, etc
-tfidf_vector2 <- tfidf_vector %>%
-    nest(-qid)
+    tfidf_vector2 <- tfidf_vector %>%
+        nest(-qid)
 
 
-
-head(tfidf_vector)   # prior to nest
-head(tfidf_vector2)  # nested version at qid level
-
+# for reference
+    head(tfidf_vector)   # prior to nest
+    head(tfidf_vector2)  # nested version at qid level
+    tfidf_vector2$data[[1]]
 
     # # testing what does each df look like? -- this is what will be passed into map function
     # (qid1_df <- tfidf_vector2$data[[1]])  # now we can pass "data" into a function through purrr::map
@@ -146,37 +147,52 @@ head(tfidf_vector2)  # nested version at qid level
     
     
 # for simplicity, just make a different one of these depending on how many dims the wv has
-calc_docvec <- function(nested_df, n_dims=50, tfidf_exp_wt=1) {
+    calc_docvec <- function(nested_df, n_dims=50, tfidf_exp_wt=1) {
+        
+        # setDF(nested_df)
+        tfidf <- nested_df[['tf_idf']]
+        dims <- paste0("X", 1:n_dims)  # this is haky; dimension cols will always be named "X1", "X2... "Xn" b/c prior transpose
+        wv_dim_mat <- as.matrix(nested_df[, dims])
+        weighted_tfidf <- (tfidf^tfidf_exp_wt)
+        wv_doc_vec <- apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (weighted_tfidf))
+        return(wv_doc_vec)
+        # return(wv_doc_vec)
+    } 
     
-    tfidf <- nested_df[['tf_idf']]
-    dims <- paste0("X", 1:n_dims)  # this is haky; dimension cols will always be named "X1", "X2... "Xn" b/c prior transpose
-    wv_dim_mat <- as.matrix(nested_df[, dims])
-    weighted_tfidf <- (tfidf^tfidf_exp_wt)
-    wv_doc_vec <- apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (weighted_tfidf))
-    # return(wv_doc_vec)
-} 
-
-# I think this needs to be in a mutate function:
-t_docvec_map1 <- Sys.time()
-tfidf_vector3 <- tfidf_vector2 %>%
-    mutate(doc_vec_exp1 = map(data, calc_docvec),
-           doc_vec_exp1.5 = map(data, calc_docvec, 50, 1.5),
-           doc_vec_exp2 = map(data, calc_docvec, 50, 2),
-           doc_vec_exp3 = map(data, calc_docvec, 50, 3),
-           doc_vec_exp4 = map(data, calc_docvec, 50, 4),
-           doc_vec_exp5 = map(data, calc_docvec, 50, 5),
-           doc_vec_exp9 = map(data, calc_docvec, 50, 9)
-           )
-(t_elap_docvec_map1 <- Sys.time() - t_docvec_map1)
+    
+    calc_docvec(tfidf_vector2$data[[1]])
+    class(tfidf_vector2$data[[1]])
+    
+    
+    setDT(tfidf_vector2)
+    # tfidf_vector2_small <- tfidf_vector2[1:10000,]
+    # setDT(tfidf_vector2_small)
+    #class(tfidf_vector2)
+    
+    # I think this needs to be in a mutate function:
+    t_docvec_map1 <- Sys.time()
+    tfidf_vector3 <- tfidf_vector2 %>%
+        mutate(doc_vec_exp1 = map(data, calc_docvec)); 
+        (t_elap_docvec_map1 <- Sys.time() - t_docvec_map1)
+    
+    
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp1.5 = map(data, calc_docvec, 50, 1.5))
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp2 = map(data, calc_docvec, 50, 2))
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp3 = map(data, calc_docvec, 50, 3))
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp4 = map(data, calc_docvec, 50, 4))
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp5 = map(data, calc_docvec, 50, 5))
+    tfidf_vector3 <- tfidf_vector3 %>% mutate(doc_vec_exp9 = map(data, calc_docvec, 50, 9))
+               
+    (t_elap_docvec_map1 <- Sys.time() - t_docvec_map1)
 
 
 
 saveRDS(tfidf_vector3, file="processed_data/docvecs_train.rds")
 (t_elap_all <- Sys.time() - t_all)
 
-
-head(tfidf_vector3)
-tfidf_vector3$doc_vec_exp2[[1]]
+# 
+# head(tfidf_vector3)
+# tfidf_vector3$doc_vec_exp2[[1]]
 
 
     # so this is dumb from here on down now I think ----------------------------------------------
