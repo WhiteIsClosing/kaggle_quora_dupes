@@ -79,7 +79,7 @@ setDT(train_tfidf2)
 setDT(glove3) #setDT(glove4)
 #tfidf_vector <- merge(x=train_tfidf2, y=glove4, by="word", all.x=T, all.y=F)
 tfidf_vector <- merge(x=train_tfidf2, y=glove3, by="word", all.x=T, all.y=F)
-setDF(tfidf_vector); setDF(glove4); setDF(train_tfidf2)
+setDF(tfidf_vector); setDF(glove3); setDF(train_tfidf2)
 
 
 
@@ -125,26 +125,28 @@ head(tfidf_vector)   # prior to nest
 head(tfidf_vector2)  # nested version at qid level
 
 
-    # testing what does each df look like? -- this is what will be passed into map function
-    (qid1_df <- tfidf_vector2$data[[1]])  # now we can pass "data" into a function through purrr::map
-    
-    class(qid1_df$tf_idf)  # numeric vector
-    tfidf <- qid1_df$tf_idf
-    dims <- paste0("X", 1:50)
-    wv_dim_mat <- as.matrix(qid1_df[,dims])
-    
-    # collapsing n_words (row -- 12 in this case) by n_dimensions (columns -- 50 in this case) to
-    # a 1 document by n_dimension document vector (weighted by either tfidf or tfidf^2 or something)
-    wv_dim_mat
-    tfidf
-    sum(wv_dim_mat[,1] * tfidf / (sum(tfidf)))
-    apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (tfidf))
-    
-    # remove the testing stuff so we can test the function below
-    rm(qid1_df, tfidf, dims, wv_dim_mat)
+    # # testing what does each df look like? -- this is what will be passed into map function
+    # (qid1_df <- tfidf_vector2$data[[1]])  # now we can pass "data" into a function through purrr::map
+    # 
+    # class(qid1_df$tf_idf)  # numeric vector
+    # tfidf <- qid1_df$tf_idf
+    # dims <- paste0("X", 1:50)
+    # wv_dim_mat <- as.matrix(qid1_df[,dims])
+    # 
+    # # collapsing n_words (row -- 12 in this case) by n_dimensions (columns -- 50 in this case) to
+    # # a 1 document by n_dimension document vector (weighted by either tfidf or tfidf^2 or something)
+    # wv_dim_mat
+    # tfidf
+    # sum(wv_dim_mat[,1] * tfidf / (sum(tfidf)))
+    # apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (tfidf))
+    # 
+    # # remove the testing stuff so we can test the function below
+    # rm(qid1_df, tfidf, dims, wv_dim_mat)
 
+    
+    
 # for simplicity, just make a different one of these depending on how many dims the wv has
-calc_docvec_50dim <- function(nested_df, n_dims=50, tfidf_exp_wt=1) {
+calc_docvec <- function(nested_df, n_dims=50, tfidf_exp_wt=1) {
     
     tfidf <- nested_df[['tf_idf']]
     dims <- paste0("X", 1:n_dims)  # this is haky; dimension cols will always be named "X1", "X2... "Xn" b/c prior transpose
@@ -155,26 +157,25 @@ calc_docvec_50dim <- function(nested_df, n_dims=50, tfidf_exp_wt=1) {
 } 
 
 # I think this needs to be in a mutate function:
-t_docvec_map <- Sys.time()
+t_docvec_map1 <- Sys.time()
 tfidf_vector3 <- tfidf_vector2 %>%
-    mutate(doc_vec_exp1 = map(data, calc_docvec_50dim))
-(t_elap_docvec_map <- Sys.time() - t_docvec_map)
+    mutate(doc_vec_exp1 = map(data, calc_docvec),
+           doc_vec_exp1.5 = map(data, calc_docvec, 50, 1.5),
+           doc_vec_exp2 = map(data, calc_docvec, 50, 2),
+           doc_vec_exp3 = map(data, calc_docvec, 50, 3),
+           doc_vec_exp4 = map(data, calc_docvec, 50, 4),
+           doc_vec_exp5 = map(data, calc_docvec, 50, 5),
+           doc_vec_exp9 = map(data, calc_docvec, 50, 9)
+           )
+(t_elap_docvec_map1 <- Sys.time() - t_docvec_map1)
 
-t_docvec_map2 <- Sys.time()
-tfidf_vector3 <- tfidf_vector3 %>%
-    mutate(doc_vec_exp2 = map(data, calc_docvec_50dim, 50, 2))
-(t_elap_docvec2_map <- Sys.time() - t_docvec2_map)
 
-tfidf_vector3 <- tfidf_vector3 %>%
-    mutate(doc_vec_exp1.5 = map(data, calc_docvec_50dim, 50, 1.5))
 
 saveRDS(tfidf_vector3, file="processed_data/docvecs_train.rds")
-
-
+(t_elap_all <- Sys.time() - t_all)
 
 
 head(tfidf_vector3)
-
 tfidf_vector3$doc_vec_exp2[[1]]
 
 
