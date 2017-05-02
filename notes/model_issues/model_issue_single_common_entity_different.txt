@@ -1,0 +1,3 @@
+Here cuba is compared to venezuela and then bolivia is compared to venezuela. both are easy entities to recognize. I want to inspect what got the highest tf-idf rating on these and why this was such a big miss. 
+
+could it be because of the question mark attached to the entity at the end? did this even get tf-idf rated at all?

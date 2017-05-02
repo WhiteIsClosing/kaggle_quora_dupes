@@ -1,0 +1,12 @@
+You learn more from failure than success...
+
+
+note that the question is the exact same except for the difference between "How _______ is something" and "why is something"
+
+
+The "somethings" are the same, but the choice of which question-word to use when approaching the something changes the ENTIRE semantic meaning of what the question is asking
+
+resolution idea:
+
+at the tf-idf calculating stage, I'd like to add an arbitrary value to words that act as potential "question-words" such as who, what, when, where, how, is, are, etc.
+I'm thinking if we add a raw value like 2 or 3, then when we weight by tf-idf those will for sure be ranked very high. In general, these words are likely to be ranked extremely low using tf-idf because almost every single one of these questions is going to use some form of those question words, we need to rebalance it in favor of using these question words for the semantic meaning of the question itself.

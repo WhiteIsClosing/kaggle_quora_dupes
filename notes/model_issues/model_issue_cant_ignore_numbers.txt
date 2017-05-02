@@ -1,0 +1,4 @@
+self explanatory here.. we obviously can't ignore the semantic value of numbers. These questions are each exactly identical with the exception of the magnitude of what the user was asking for. This should pretty much be a red flag to set our probability of the meaning to be basically zero.
+
+
+So here is an EDA idea... look for instances of 0% of the numbers included in the question pair match, and see how often this results in a 0 (no match) or a 1 (match)

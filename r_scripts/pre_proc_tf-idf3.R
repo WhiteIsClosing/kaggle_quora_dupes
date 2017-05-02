@@ -28,13 +28,15 @@
     
 # load data:
     train <- read.csv(file="input/train.csv", stringsAsFactors = F)
-    train_docvec <- readRDS(file="processed_data/docvecs_train.rds")
+    #train_docvec <- readRDS(file="processed_data/docvecs_train.rds")  # this is the huge one
+    train_docvec <- readRDS(file="processed_data/docvecs_train_small.rds")
     # need to combine train and train_docvec somehow
     
-
-    
-    
-    
+        # # creating this for memory efficiency... one-off creation should be moved upstream
+        # train_docvec_small <- train_docvec[, setdiff(names(train_docvec), 'data')]
+        # setDF(train_docvec_small)
+        # saveRDS(train_docvec_small, file='processed_data/docvecs_train_small.rds')
+        
     
 # mapping doc vecs to qid1 in train
     # make copy to be mapped into the qid1's in train
@@ -109,21 +111,28 @@
     train3_small <- train3[1:1000,]
     
     # bingo.. this is what we needed to do all along -- this also takes ~ 1.5 min per each map2
-    t_testing <- Sys.time()
-    
+    gc()
+    t_test1 <- Sys.time()
     train4 <- train3 %>%
     # train4 <- train3_small %>%    # if I want to test on a smaller data.table
         
         # instead of "safely(score_docvec_pair)" lets try "possibly(score_docvec_pair, NA_real_)"
-        mutate(tfidf1_dv_sim = map2(qid1_doc_vec_exp1, qid2_doc_vec_exp1, possibly(score_docvec_pair, NA_real_)),
-               tfidf1.5_dv_sim = map2(qid1_doc_vec_exp1.5, qid2_doc_vec_exp1.5, possibly(score_docvec_pair, NA_real_)),
+        mutate(tfidf1_dv_sim = map2(qid1_doc_vec_exp1, qid2_doc_vec_exp1, possibly(score_docvec_pair, NA_real_)))
+    (t_elap_test1 <- Sys.time() - t_test1)
+      
+      
+          
+    # do the remaining ones
+    t_test2 <- Sys.time() 
+    train4 <- train4 %>%
+               mutate(tfidf1.5_dv_sim = map2(qid1_doc_vec_exp1.5, qid2_doc_vec_exp1.5, possibly(score_docvec_pair, NA_real_)),
                tfidf2_dv_sim = map2(qid1_doc_vec_exp2, qid2_doc_vec_exp2, possibly(score_docvec_pair, NA_real_)),
                tfidf3_dv_sim = map2(qid1_doc_vec_exp3, qid2_doc_vec_exp3, possibly(score_docvec_pair, NA_real_)),
                tfidf4_dv_sim = map2(qid1_doc_vec_exp4, qid2_doc_vec_exp4, possibly(score_docvec_pair, NA_real_)),
                tfidf5_dv_sim = map2(qid1_doc_vec_exp5, qid2_doc_vec_exp5, possibly(score_docvec_pair, NA_real_)),
                tfidf9_dv_sim = map2(qid1_doc_vec_exp9, qid2_doc_vec_exp9, possibly(score_docvec_pair, NA_real_))
         )
-    (t_elap_testing <- Sys.time() - t_testing)
+    (t_elap_test2 <- Sys.time() - t_test2)
     
     
     # added these to the one above it so they are all three together
@@ -132,6 +141,8 @@
     #     mutate(tfidf1.5_dv_sim = map2(qid1_doc_vec_exp1.5, qid2_doc_vec_exp1.5, safely(score_docvec_pair)),
     #            tfidf2_dv_sim = map2(qid1_doc_vec_exp2, qid2_doc_vec_exp2, safely(score_docvec_pair)))
     
+    
+    # need to determine if this step is still necessary
     train4 <- train4 %>%
         mutate(tfidf1_dv_sim = tfidf1_dv_sim %>% flatten_dbl,
                tfidf1.5_dv_sim = tfidf1.5_dv_sim %>% flatten_dbl,
@@ -152,20 +163,84 @@
     library(ggplot2)
     
     train4$is_dup_fac <- as.factor(train4$is_duplicate)
-    g1 <- ggplot(data=train4, aes(x=tfidf5_dv_sim, fill=is_dup_fac)) +
+    g1 <- ggplot(data=train4, aes(x=tfidf1_dv_sim, fill=is_dup_fac)) +
         geom_histogram(alpha=0.4, position='identity')
     plot(g1)
     
     train4$tfidf1_dv_sim %>% unlist(recursive=T) %>% head() 
     
-    train4_sub <- train4[, !grepl("^qid", names(train4))] %>% head()
+    train4_sub <- train4[, c("id", "qid1", "qid2",  names(train4)[!grepl("^qid", names(train4))]   )  ] 
     
     saveRDS(train4, file='processed_data/train_docvector_sim_01.rds')
-    saveRDS(train4, file='processed_data/train_docvector_sim_01_sub.rds')
-    
-    names(train4)
-    sapply(train4, class)
-    
-    head(train4)
+    saveRDS(train4_sub, file='processed_data/train_docvector_sim_01_sub.rds')
     
     
+    
+    
+    
+# ================  inspecting results and baselining ==================================================================
+    
+    # load libs
+    library(rstudioapi)
+    library(tidyr)
+    library(data.table)  # just for faster dplyr verbs
+    library(dplyr)
+    library(purrr); library(digest)  # i think digest has to be loaded or something?
+    library(text2vec)
+    setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)))
+    results <- readRDS(file='processed_data/train_docvector_sim_01_sub.rds')
+    
+    
+    
+    over_pred <- results[results$tfidf1_dv_sim > 0.999 & results$is_duplicate == 0,]
+    
+    
+        # super quick model benchmarking:
+        library(caret)
+        results_preds_tar <- results[, c("is_duplicate", names(results)[grepl("^tfidf", names(results))])]
+        set.seed(1)
+        train_indx <- caret::createDataPartition(y=results_preds_tar$is_duplicate, times=1, p=0.7, list=F)
+        results_preds_tar1 <- results_preds_tar[train_indx,]
+        results_preds_tar2 <- results_preds_tar[-train_indx,]
+        names(results_preds_tar)    
+        
+        # here, "is_duplicate" is an integer
+        quicklm <- lm(formula = is_duplicate ~ ., data=results_preds_tar1)      
+        summary(quicklm)    
+        results_preds_tar2$preds_lm <- predict(quicklm, newdata=results_preds_tar2)
+        head(results_preds_tar2$preds_lm)
+        
+        ggplot(results_preds_tar2, aes(x=preds_lm, fill=as.factor(is_duplicate))) +
+            geom_histogram(alpha=0.3, position='identity')
+            
+        
+        
+        
+        # quick glm
+        quickglm <- glm(formula = as.factor(is_duplicate) ~ tfidf1_dv_sim, data=results_preds_tar1, family = binomial)
+        summary(quickglm)    
+        results_preds_tar2$preds_glm <- predict(quickglm, newdata=results_preds_tar2, type='response')
+        head(results_preds_tar2$preds_glm)    
+        range((results_preds_tar2$preds_glm), na.rm=T)    
+        
+        ggplot(results_preds_tar2, aes(x=preds_glm, fill=as.factor(is_duplicate))) +
+            geom_histogram(alpha=0.3, position='identity')
+        
+        
+        
+        LogLoss<-function(act, pred)
+        {
+            eps = 1e-15;
+            nr = length(pred)
+            pred = matrix(sapply( pred, function(x) max(eps,x)), nrow = nr) 
+            pred = matrix(sapply( pred, function(x) min(1-eps,x)), nrow = nr)
+            ll = sum(act*log(pred) + (1-act)*log(1-pred))
+            ll = ll * -1/(length(act)) 
+            return(ll);
+        }
+        
+    
+        LogLoss(results_preds_tar2$is_duplicate[!is.na(results_preds_tar2$preds_glm)], 
+                results_preds_tar2$preds_glm[!is.na(results_preds_tar2$preds_glm)] )
+        
+        

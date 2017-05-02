@@ -1,0 +1,8 @@
+Need a way to deal with super obscure website names and words in general. Right now I'm removing anything that can't be found in the glove pre-trained vector.. but that will eliminate a lot of insanely unique items such as this.
+
+This transcends just websites.. i want to deal with obscure words that will not show up in the glove pre-train vector as well. 
+
+so I need a work flow like this:
+
+IF word in my data set can't be found within glove pre-trained vectors
+THEN separate it out and hold it aside 

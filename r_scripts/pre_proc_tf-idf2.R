@@ -25,12 +25,12 @@ t_all <- Sys.time()
 
 library(rstudioapi)
 setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)))
-
-
 library(tidyr)
 library(data.table)  # just for faster dplyr verbs
 library(dplyr)
 library(purrr)
+
+
 
 
 # read in raw data, word vector, tf-idf scores
@@ -39,8 +39,35 @@ library(purrr)
     train_tfidf <- readRDS("processed_data/tf_idf_train_01.rds")
 
     head(train_tfidf)
-
-
+    
+    
+        # deep diving some issues here 
+            issue_001a <- train_tfidf[train_tfidf$qid == '7253',]
+            # there needs to be a deep dive analysis on the words that aren't showing up in glove 
+            train_tfidf_fallout <- train_tfidf[!train_tfidf$word %in% names(glove),]  # exact opposite of what is below
+            
+            fallout_gb <- dplyr::group_by(train_tfidf_fallout, word) %>%
+                summarise(
+                    count = n(), avg_idf = mean(idf, na.rm=T), avg_tfidf = mean(tf_idf, na.rm=T)) %>%
+                arrange(desc(count))
+        
+            
+        # another issue
+            issue_002a <- train_tfidf[train_tfidf$qid == '244375',]
+            ggplot(train_tfidf[train_tfidf$tf_idf < 5,], aes(x=tf_idf)) +
+                geom_histogram(alpha=0.3, fill='blue') +
+                ggtitle("tf_idf distribution of train -- force 'question words' to 1.5?")
+            
+            tfidf_wd_gp <- dplyr::group_by(train_tfidf, word) %>%
+                summarise(count = n(), avg_idf = mean(idf, na.rm=T), avg_tfidf = mean(tf_idf, na.rm=T)) %>%
+                arrange(desc(count)) %>%
+                filter(word %in% c("how", "who", "what", "when", "where", "why", "are", "is", "can", "am"))
+            
+            
+            fallout_gb_qwords <- fallout_gb[fallout_gb$word %in% c("how", "who", "what", "when", "where", "why", "are", "is", "can", "am"),]
+            
+            
+        
 # limit train_tfidf to only what is found in glove and vice versa?
     train_tfidf2 <- train_tfidf[train_tfidf$word %in% names(glove),]
     glove_words_to_keep <- names(glove)[names(glove) %in% train_tfidf2$word]
@@ -53,17 +80,17 @@ library(purrr)
 
     
     
-        #There is no reason to nest this yet... it doesn't even collapse any observations, only fields...
-        glove4 <- glove3 %>%
-            nest(-word)
-        # this no longer makes sense (see previous comment amove)
-        # I can do mathematical operations on these vectors like so:
-        unlist(glove4$data[[1]]) + 100
-        glove4$data[[1]] + 100
-        glove4[['data']][[1]] + 200
+        # #There is no reason to nest this yet... it doesn't even collapse any observations, only fields...
+        # glove4 <- glove3 %>%
+        #     nest(-word)
+        # # this no longer makes sense (see previous comment amove)
+        # # I can do mathematical operations on these vectors like so:
+        # unlist(glove4$data[[1]]) + 100
+        # glove4$data[[1]] + 100
+        # glove4[['data']][[1]] + 200
 
         # temp, I don't think we need these, but I might change my mind later:
-        rm(glove, train_tfidf)
+        rm(glove, train_tfidf); gc()
 
 
 
@@ -82,8 +109,8 @@ library(purrr)
     tfidf_vector <- merge(x=train_tfidf2, y=glove3, by="word", all.x=T, all.y=F)
     setDF(tfidf_vector); setDF(glove3); setDF(train_tfidf2)
 
-
-
+    
+    
         # # PSA: Drink your milk, eat your veggies, and DO YOUR TESTING:
         # # sample random words from glove4
         # glove4[['word']][sample(1:nrow(glove4), 1)]   # this is fun, my random word grabber
@@ -119,30 +146,40 @@ library(purrr)
 # so now everything will be stored in "data" -- tfidf, word vector dimensions, etc
     tfidf_vector2 <- tfidf_vector %>%
         nest(-qid)
+    gc()
+    
+    
+    
+    
+    
+# going to create a RAM checkpoint here
+    saveRDS(tfidf_vector2, file="processed_data/RAM_cp_pre_proc_tfidf2_tfidf_vector2.rds")
+    tfidf_vector2 <- readRDS(file="processed_data/RAM_cp_pre_proc_tfidf2_tfidf_vector2.rds")
+    
+    
 
-
-# for reference
-    head(tfidf_vector)   # prior to nest
-    head(tfidf_vector2)  # nested version at qid level
-    tfidf_vector2$data[[1]]
-
-    # # testing what does each df look like? -- this is what will be passed into map function
-    # (qid1_df <- tfidf_vector2$data[[1]])  # now we can pass "data" into a function through purrr::map
-    # 
-    # class(qid1_df$tf_idf)  # numeric vector
-    # tfidf <- qid1_df$tf_idf
-    # dims <- paste0("X", 1:50)
-    # wv_dim_mat <- as.matrix(qid1_df[,dims])
-    # 
-    # # collapsing n_words (row -- 12 in this case) by n_dimensions (columns -- 50 in this case) to
-    # # a 1 document by n_dimension document vector (weighted by either tfidf or tfidf^2 or something)
-    # wv_dim_mat
-    # tfidf
-    # sum(wv_dim_mat[,1] * tfidf / (sum(tfidf)))
-    # apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (tfidf))
-    # 
-    # # remove the testing stuff so we can test the function below
-    # rm(qid1_df, tfidf, dims, wv_dim_mat)
+    # for reference
+        head(tfidf_vector)   # prior to nest
+        head(tfidf_vector2)  # nested version at qid level
+        tfidf_vector2$data[[1]]
+    
+        # # testing what does each df look like? -- this is what will be passed into map function
+        # (qid1_df <- tfidf_vector2$data[[1]])  # now we can pass "data" into a function through purrr::map
+        # 
+        # class(qid1_df$tf_idf)  # numeric vector
+        # tfidf <- qid1_df$tf_idf
+        # dims <- paste0("X", 1:50)
+        # wv_dim_mat <- as.matrix(qid1_df[,dims])
+        # 
+        # # collapsing n_words (row -- 12 in this case) by n_dimensions (columns -- 50 in this case) to
+        # # a 1 document by n_dimension document vector (weighted by either tfidf or tfidf^2 or something)
+        # wv_dim_mat
+        # tfidf
+        # sum(wv_dim_mat[,1] * tfidf / (sum(tfidf)))
+        # apply(X=wv_dim_mat, MARGIN=2, FUN=weighted.mean, (tfidf))
+        # 
+        # # remove the testing stuff so we can test the function below
+        # rm(qid1_df, tfidf, dims, wv_dim_mat)
 
     
     
@@ -159,16 +196,17 @@ library(purrr)
         # return(wv_doc_vec)
     } 
     
+            # quick testing
+            calc_docvec(tfidf_vector2$data[[1]])
+            class(tfidf_vector2$data[[1]])
     
-    calc_docvec(tfidf_vector2$data[[1]])
-    class(tfidf_vector2$data[[1]])
     
-    
-    setDT(tfidf_vector2)
-    # tfidf_vector2_small <- tfidf_vector2[1:10000,]
-    # setDT(tfidf_vector2_small)
-    #class(tfidf_vector2)
-    
+        setDT(tfidf_vector2)
+        # tfidf_vector2_small <- tfidf_vector2[1:10000,]
+        # setDT(tfidf_vector2_small)
+        #class(tfidf_vector2)
+        
+        
     # I think this needs to be in a mutate function:
     t_docvec_map1 <- Sys.time()
     tfidf_vector3 <- tfidf_vector2 %>%
@@ -190,6 +228,9 @@ library(purrr)
 saveRDS(tfidf_vector3, file="processed_data/docvecs_train.rds")
 (t_elap_all <- Sys.time() - t_all)
 
+
+head(tfidf_vector3)
+names(tfidf_vector3)
 # 
 # head(tfidf_vector3)
 # tfidf_vector3$doc_vec_exp2[[1]]
