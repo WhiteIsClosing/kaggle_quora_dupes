@@ -1,0 +1,4 @@
+curl 'https://doc-0g-8s-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/7fkckvbgnebq83d5e4hgmbbjv4g17fqb/1494432000000/06848720943842814915/*/0B7XkCwpI5KDYNlNUTTlSS21pQmM?e=download' -H 'accept-encoding: gzip, deflate, sdch, br' -H 'accept-language: en-US,en;q=0.8' -H 'upgrade-insecure-requests: 1' -H 'user-agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36' -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'referer: https://drive.google.com/uc?id=0B7XkCwpI5KDYNlNUTTlSS21pQmM&export=download' -H 'authority: doc-0g-8s-docs.googleusercontent.com' -H 'cookie: NID=94=KEAvcNqaYqHNRmCzYQzZcTcRjrALL7WJdSTR6_-5p_Z39TWv3sNocYOCL895xWFy5v3gsGVKCpxZ-9oghrXvhL-s04RYCpcZhsMFRM0t70wkTs6e_473uKcVja8oyO_F' -H 'x-client-data: CJO2yQEIo7bJAQjEtskBCImSygEI+5zKAQipncoB' --compressed > w2v.bin.gz
+
+gunzip w2v.bin.gz
+
