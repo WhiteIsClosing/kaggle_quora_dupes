@@ -1,0 +1,40 @@
+
+# Actual issue was not using the correct kernel on the remote ipython notebook instance, but this information is still useful so I'm saving this document anyway
+
+
+# Involves
+Keras LSTM TensorFlow bitfusion_tensorflow_AMI Ubuntu14 Python2.7
+
+# trying to run this script:
+https://www.kaggle.com/lystdo/lstm-with-word2vec-embeddings
+
+# prereq datasets:
+train / test from kaggle quora-dupes (kg cli this)
+w2v google news 300 bin file
+
+# recurring error message while running keras LSTM model:
+save_weights requires module h5py
+
+h5py is installed, I can go into python and import it with no issues
+
+these are all sugested solutions:
+https://github.com/fchollet/keras/issues/3426
+
+sudo apt-get install python-h5py -- this one installed no problems python-h5py_2.2.1-1build2_amd64.deb
+sudo pip install cython -- this one installed fine 0.25.2
+sudo apt-get install libhdf5 -- "Unable to locate package libhdf5"
+sudo apt-get install libhdf5-dev -- "libhdf5-dev is already the newest version"
+
+ok so not really sure if anything I just did changed anything...
+
+
+
+# so if you ever can't find a package in ubuntu, this might come in handy...
+https://askubuntu.com/questions/148638/how-do-i-enable-the-universe-repository/148645#148645
+not going to bother with this right now though..
+
+# ok so I can't get a kernel to show up correctly properly and just tried testing out my ipython notebook with a quick print statement and it wouldn't show the output... something is not working correctly... I might need to just create a new notebook and copy paste all of the code snippets in
+
+One thing it complains about is not having access to the same kernel that was used on the notebook when it was created
+
+
