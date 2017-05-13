@@ -1,0 +1,14 @@
+I got to this curl by using chrome developer tools (incognito so no cookies) then right click the document call on the network indicator and copy curl (bash) statement. Then added " > w2v.bin.gz" at the end so this would save the binary file.
+
+curl 'https://doc-08-28-docs.googleusercontent.com/docs/securesc/42p47ri457qnmmr2qh4jm7kuhd4t1gfr/ei5uhtb3h9rr433ndkaai9if13pckaua/1494511200000/06848720943842814915/16433180371073812158/0B7XkCwpI5KDYNlNUTTlSS21pQmM?e=download' -H 'accept-encoding: gzip, deflate, sdch, br' -H 'accept-language: en-US,en;q=0.8' -H 'upgrade-insecure-requests: 1' -H 'user-agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36' -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'referer: https://drive.google.com/uc?id=0B7XkCwpI5KDYNlNUTTlSS21pQmM&export=download' -H 'authority: doc-08-28-docs.googleusercontent.com' -H 'cookie: AUTH_o5ohpbmbd13339aeha62l46f69j91aoh=16433180371073812158|1494511200000|qkar88uhieauf7q7v0ubvgddlnflhovc' --compressed > w2v.bin.gz
+
+
+after installing kaggle-cli need to use this in order for all of this to work:
+sudo pip install --upgrade html5lib==1.0b8
+
+
+# so some type of git flow to the virtual box would probably be ideal.. baby steps!
+# this is the fat command to scp my ipynotebook to the server:
+$ scp -i C:/users/tvananne/documents/general/AWS_boxes/bitfusion_tensorflow_01/
+bitfus_tensor.pem LSTM_word2vec_exp_AWS_remote.ipynb ubuntu@ec2-34-203-198-130.
+compute-1.amazonaws.com:~/pynb/quora_dupes/py_scripts
